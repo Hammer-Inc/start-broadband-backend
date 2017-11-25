@@ -8,7 +8,7 @@ def index():
     return 'success', 200
 
 
-@app.route('/address/search')
+@app.route('/address/search', methods=['POST'])
 def search():
     return 'success', 200
 
