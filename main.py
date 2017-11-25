@@ -46,18 +46,12 @@ def search():
             print("Warning: Address filter failed")
         # return result, 501
 
-<<<<<<< HEAD
         result = result[0]
         service = do_telstra_service_lookup(result["locationId"],
                                             client_request)
     except ConnectionError:
         return "No connection available", 500
     return service
-=======
-    result = result[0]
-    service = do_telstra_service_lookup(result["locationId"], client_request)
-    return service, 200
->>>>>>> origin/bens-magic
 
 
 def do_telstra_location_lookup(args):
@@ -101,8 +95,8 @@ def do_telstra_service_lookup(locationId, args):
                              data=data,
                              auth=HTTPBasicAuth(authorization["username"],
                                                 authorization["password"]))
-    configuredData = startBB.main(response)
-    return configuredData
+    configured_data = startBB.main(response)
+    return configured_data
 
 if __name__ == '__main__':
     app.run()

@@ -13,29 +13,30 @@
 #       No connections available
 
 
-#[0] = ADSL
-#[5] = NFAS
-#[6] = NWAS
-#[7] = NCAS
-#[8] = NHAS
-#[9] = NSAS (Not needed???)
-import json
+# [0] = ADSL
+# [5] = NFAS
+# [6] = NWAS
+# [7] = NCAS
+# [8] = NHAS
+# [9] = NSAS (Not needed???)
 import csv
+import json
 
-def find(jsonObject):
+
+def find(json_object):
     global connectionType, containingRow, priceZone, portsAvailable
 
     validation = 1
     count = 0
-    jsonText = str(jsonObject.text)
+    jsonText = str(json_object.text)
     jsonData = json.loads(jsonText)
 
     while validation:
-        if jsonData["accessQualificationList"][count]["qualificationResult"]["value"] == "PASS":
+        if jsonData["accessQualificationList"][count]["qualificationResult"][
+            "value"] == "PASS":
             validation = 0
         else:
             count = count + 1
-
 
     connectionType = getType(jsonData, count)
 
@@ -50,12 +51,15 @@ def find(jsonObject):
         if containingRow[4] != 0 or containingRow[5]:
             portsAvailable = True
             if portsAvailable:
-                priceZone = jsonData["accessQualificationList"][count]["priceZone"]["value"]
+                priceZone = \
+                jsonData["accessQualificationList"][count]["priceZone"]["value"]
             else:
                 priceZone = "None"
 
+
 def getType(jsonData, count):
-    valueToGet = jsonData["accessQualificationList"][count]["accessType"]["value"]
+    valueToGet = jsonData["accessQualificationList"][count]["accessType"][
+        "value"]
 
     if valueToGet == "NFAS":
         return "Fibre To The Premises"
@@ -68,18 +72,17 @@ def getType(jsonData, count):
     elif valueToGet == "SSS" or valueToGet == "DSL-L2":
         return "ADSL2"
 
+
 def read_csv(csv_file):
     data = []
     with open(csv_file, 'r') as f:
-
         # create a list of rows in the CSV file
         rows = f.readlines()
 
         # strip white-space and newlines
-        rows = list(map(lambda x:x.strip(), rows))
+        rows = list(map(lambda x: x.strip(), rows))
 
         for row in rows:
-
             # further split each row into columns assuming delimiter is comma
             row = row.split(',')
 
@@ -96,9 +99,8 @@ class Connection(object):
         body_dict = {"priceZone": priceZone}
         self.body = body_dict
 
+
 def main(jsonObject):
     find(jsonObject)
     connectionFinal = Connection()
     return json.dumps(connectionFinal.__dict__)
-
-
