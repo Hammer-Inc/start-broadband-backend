@@ -2,12 +2,14 @@ import json
 
 import requests
 from flask import Flask, request
+from requests import ConnectionError
 from requests.auth import HTTPBasicAuth
 
 try:
     from config import authorization, telstra_location_url, telstra_details_url
 except ImportError:
     import os
+
     authorization = {
         "username": os.getenv("username"),
         "password": os.getenv("password"),
@@ -22,21 +24,33 @@ def index():
     return 'success', 200
 
 
+@app.route('/address/get', methods=['POST'])
+def get():
+    client_request = json.loads(request.data)
+    success = do_telstra_service_lookup(client_request["locationId"],
+                                        client_request)
+    return success
+
+
 @app.route('/address/search', methods=['POST'])
 def search():
-    client_request = json.loads(request.data)
-    result = do_telstra_location_lookup(client_request)
-    if result is False:
-        return 'No Line Available',
-    if result is None:
-        return 'Bad Request', 400
-    if len(result) > 1:
-        print("Warning: Address filter failed")
-#       return result, 501
+    try:
+        client_request = json.loads(request.data)
+        result = do_telstra_location_lookup(client_request)
+        if result is False:
+            return 'No Line Available', 437
+        if result is None:
+            return 'Bad Request', 400
+        if len(result) > 1:
+            print("Warning: Address filter failed")
+        # return result, 501
 
-    result = result[0]
-    service = do_telstra_service_lookup(result["locationId"], client_request)
-    return service.content, 200
+        result = result[0]
+        service = do_telstra_service_lookup(result["locationId"],
+                                            client_request)
+    except ConnectionError:
+        return "No connection available", 500
+    return service
 
 
 def do_telstra_location_lookup(args):
@@ -66,10 +80,10 @@ def do_telstra_location_lookup(args):
     return None
 
 
-def do_telstra_service_lookup(id, args):
+def do_telstra_service_lookup(locationId, args):
     data = json.dumps({
         "qualifyNationalWholesaleBroadbandProductRequest": {
-            "telstraLocationID": id,
+            "telstraLocationID": locationId,
             "standAloneQualification": "true"
         }
     })
@@ -83,6 +97,6 @@ def do_telstra_service_lookup(id, args):
 
     return response
 
-
 if __name__ == '__main__':
     app.run()
+
