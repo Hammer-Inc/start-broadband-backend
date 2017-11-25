@@ -6,17 +6,17 @@ from flask import Flask, request
 from requests import ConnectionError
 from requests.auth import HTTPBasicAuth
 
-try:
-    from config import authorization, telstra_location_url, telstra_details_url
-except ImportError:
-    import os
+# try:
+#     from config import authorization, telstra_location_url, telstra_details_url
+# except ImportError:
+import os
 
-    authorization = {
-        "username": os.getenv("username"),
-        "password": os.getenv("password"),
-    }
-    telstra_location_url = os.getenv("telstra_location_url")
-    telstra_details_url = os.getenv("telstra_details_url")
+authorization = {
+    "username": os.getenv("username"),
+    "password": os.getenv("password"),
+}
+telstra_location_url = os.getenv("telstra_location_url")
+telstra_details_url = os.getenv("telstra_details_url")
 app = Flask(__name__)
 
 
