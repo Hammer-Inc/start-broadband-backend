@@ -1,6 +1,7 @@
 import json
 
 import requests
+import startBB
 from flask import Flask, request
 from requests.auth import HTTPBasicAuth
 
@@ -36,7 +37,7 @@ def search():
 
     result = result[0]
     service = do_telstra_service_lookup(result["locationId"], client_request)
-    return service.content, 200
+    return service, 200
 
 
 def do_telstra_location_lookup(args):
@@ -80,8 +81,8 @@ def do_telstra_service_lookup(id, args):
                              data=data,
                              auth=HTTPBasicAuth(authorization["username"],
                                                 authorization["password"]))
-
-    return response
+    configuredData = startBB.main(response)
+    return configuredData
 
 
 if __name__ == '__main__':

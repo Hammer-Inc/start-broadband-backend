@@ -22,11 +22,13 @@
 import json
 import csv
 
-def find(jsonData):
+def find(jsonObject):
     global connectionType, containingRow, priceZone, portsAvailable
 
     validation = 1
     count = 0
+    jsonText = str(jsonObject.text)
+    jsonData = json.loads(jsonText)
 
     while validation:
         if jsonData["accessQualificationList"][count]["qualificationResult"]["value"] == "PASS":
@@ -64,7 +66,7 @@ def getType(jsonData, count):
     elif valueToGet == "NHAS":
         return "HFC"
     elif valueToGet == "SSS" or valueToGet == "DSL-L2":
-        return "ADSL"
+        return "ADSL2"
 
 def read_csv(csv_file):
     data = []
