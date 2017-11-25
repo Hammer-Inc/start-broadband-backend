@@ -4,8 +4,16 @@ import requests
 from flask import Flask, request
 from requests.auth import HTTPBasicAuth
 
-from config import authorization, telstra_location_url, telstra_details_url
-
+try:
+    from config import authorization, telstra_location_url, telstra_details_url
+except ImportError:
+    import os
+    authorization = {
+        "username": os.getenv("username"),
+        "password": os.getenv("password"),
+    }
+    telstra_location_url = os.getenv("telstra_location_url")
+    telstra_details_url = os.getenv("telstra_details_url")
 app = Flask(__name__)
 
 
@@ -46,8 +54,6 @@ def do_telstra_location_lookup(args):
         for isp in result['serviceProviderLocationList']:
             if isp["serviceProvider"]["value"] == "Telstra":
                 for location in isp["locationList"]:
-                    print location["address"]["subAddressNumber"]
-                    print args["address"]["unitNumber"]
                     if ((location["address"]["subAddressNumber"]) ==
                             args["address"]["unitNumber"]):
                         print "success"
@@ -74,6 +80,7 @@ def do_telstra_service_lookup(id, args):
                              data=data,
                              auth=HTTPBasicAuth(authorization["username"],
                                                 authorization["password"]))
+
     return response
 
 
