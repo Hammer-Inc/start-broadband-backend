@@ -21,12 +21,12 @@
 # [9] = NSAS (Not needed???)
 import json
 import csv
-
+import numpy
 
 class Connection(object):
     def __init__(self):
         self.connectionType = None
-        body_dict = {"priceZone": None, "portsAvailability": None}
+        body_dict = {"priceZone": None, "portsAvailability": None, "distanceToExchange": None, "expectedDate": None, "expectedDownSpeed": None}
         self.body = body_dict
 
     def setConnectionType(self, connectionType):
@@ -38,13 +38,29 @@ class Connection(object):
     def setPortsAvailability(self, portsAvailability):
         self.body["portsAvailability"] = portsAvailability
 
+    def setDistanceToExchange(self, distanceToExchange):
+        self.body["distanceToExchange"] = distanceToExchange
+
+    def setExpectedDate(self, expectedDate):
+        self.body["expectedDate"] = expectedDate
+
+    def setExpectedDownSpeed(self, expectedDownSpeed):
+        self.body["expectedDownSpeed"] = expectedDownSpeed
+
+    def setExpectedUpSpeed(self, expectedUpSpeed):
+        self.body["expectedUpSpeed"] = expectedUpSpeed
+
 def find(jsonObject, connectionObject):
     global containingRow
 
     validation = 1
-    count = 0
     jsonText = str(jsonObject.text)
     jsonData = json.loads(jsonText)
+
+    # nbnJsonText = str(nbnJsonObject.text)
+    # nbnJsonData = json.loads(nbnJsonText)
+
+    count = 0
 
     while validation:
         if jsonData["accessQualificationList"][count]["qualificationResult"]["value"] == "PASS":
@@ -58,7 +74,6 @@ def find(jsonObject, connectionObject):
         exchangeCode = jsonData["siteDetails"]["exchangeCode"]
         portsCSV = csv.reader(open('ports.csv', "rb"), delimiter=",")
         for row in portsCSV:
-            # if current rows 2nd value is equal to input, print that row
             if exchangeCode == row[2]:
                 containingRow = row
 
@@ -71,15 +86,42 @@ def find(jsonObject, connectionObject):
                 priceZone = "None"
             connectionObject.setPriceZone(priceZone)
 
+        connectionObject.setDistanceToExchange(jsonData["siteDetails"]["distanceToExchange"])
+        # connectionObject.setExpectedDate(nbnJsonData["servingArea"]["rfsMessage"])
+
+        distanceCSV = csv.reader(open('distance.csv', "rb"), delimiter=",")
+        xList = []
+        yList = []
+
+        for row in distanceCSV:
+            xList.append(row[0])
+            yList.append(row[1])
+        xList.pop(0)
+        yList.pop(0)
+        xValue = jsonData["siteDetails"]["distanceToExchange"]
+        float(xValue)
+
+        countx = 0
+        county = 0
+        for value in xList:
+            xList[countx] = float(value)
+            countx = countx + 1
+        for value in yList:
+            yList[county] = float(value)
+            county = county + 1
+        connectionObject.setExpectedDownSpeed(str(int(round(numpy.interp(xValue, xList, yList), 0))))
+        connectionObject.setExpectedUpSpeed("1")
+
+
 def getType(jsonData, count):
     valueToGet = jsonData["accessQualificationList"][count]["accessType"]["value"]
 
     if valueToGet == "NFAS":
-        return "Fibre To The Premises"
+        return "FTTP"
     elif valueToGet == "NWAS":
         return "Fixed Wireless"
     elif valueToGet == "NCAS":
-        return "Fibre To The Node"
+        return "FTTN"
     elif valueToGet == "NHAS":
         return "HFC"
     elif valueToGet == "SSS" or valueToGet == "DSL-L2":
