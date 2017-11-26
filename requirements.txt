@@ -2,3 +2,4 @@ Flask==0.12.2
 heroku==0.1.4
 gunicorn==19.7.1
 Flask-Cors==3.0.3
+numpy==1.13.1
