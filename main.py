@@ -117,7 +117,7 @@ def maps_to_telstra_address(maps_address):
         "state": "",
         "postcode": ""
     }}
-    for field in maps_address["address_components"]:
+    for field in maps_address:
         type = field["types"]
         value = field["long_name"].encode('utf-8')
         if "subpremise" in type:
