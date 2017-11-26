@@ -1,14 +1,13 @@
 import json
+import os
 
 import requests
 from flask import Flask, request
+from flask_cors import CORS
 from requests import ConnectionError
 from requests.auth import HTTPBasicAuth
 
 import startBB
-# from config import authorization, telstra_location_url, telstra_details_url
-
-import os
 
 authorization = {
     "username": os.getenv("username"),
@@ -16,7 +15,9 @@ authorization = {
 }
 telstra_location_url = os.getenv("telstra_location_url")
 telstra_details_url = os.getenv("telstra_details_url")
+
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route("/")
@@ -102,6 +103,10 @@ def do_telstra_service_lookup(locationId, args):
     return configured_data
 
 
+#
+# def call_nbn_api(args):
+
+
 def maps_to_telstra_address(maps_address):
     telstra = {"address": {
         "unitNumber": "",
@@ -130,6 +135,7 @@ def maps_to_telstra_address(maps_address):
             telstra["address"]["postcode"] = value
 
     return telstra
+
 
 if __name__ == '__main__':
     app.run()
