@@ -1,5 +1,4 @@
 import json
-import os
 
 import requests
 from flask import Flask, request
@@ -8,13 +7,14 @@ from requests import ConnectionError
 from requests.auth import HTTPBasicAuth
 
 import startBB
+from config import authorization, telstra_location_url, telstra_details_url
 
-authorization = {
-    "username": os.getenv("username"),
-    "password": os.getenv("password"),
-}
-telstra_location_url = os.getenv("telstra_location_url")
-telstra_details_url = os.getenv("telstra_details_url")
+# authorization = {
+#     "username": os.getenv("username"),
+#     "password": os.getenv("password"),
+# }
+# telstra_location_url = os.getenv("telstra_location_url")
+# telstra_details_url = os.getenv("telstra_details_url")
 
 app = Flask(__name__)
 CORS(app)
@@ -51,7 +51,7 @@ def search():
 
         result = result[0]
         service = do_telstra_service_lookup(result["locationId"],
-                                            client_request)
+                                            client_request, telstra_address)
     except ConnectionError:
         return "No connection available", 500
     return service
@@ -75,7 +75,6 @@ def do_telstra_location_lookup(args):
                 for location in isp["locationList"]:
                     if ((location["address"]["subAddressNumber"]) ==
                             args["address"]["unitNumber"]):
-                        print "success"
                         return [location]
                 return isp["locationList"]
     if response.status_code is 400:
@@ -85,7 +84,7 @@ def do_telstra_location_lookup(args):
     return None
 
 
-def do_telstra_service_lookup(locationId, args):
+def do_telstra_service_lookup(locationId, args, address):
     data = json.dumps({
         "qualifyNationalWholesaleBroadbandProductRequest": {
             "telstraLocationID": locationId,
@@ -95,6 +94,7 @@ def do_telstra_service_lookup(locationId, args):
     header = {
         "Content-Type": "application/json",
     }
+    nbn_data = call_nbn_api(address, args)
     response = requests.post(telstra_details_url, headers=header, timeout=6000,
                              data=data,
                              auth=HTTPBasicAuth(authorization["username"],
@@ -103,8 +103,15 @@ def do_telstra_service_lookup(locationId, args):
     return configured_data
 
 
-#
-# def call_nbn_api(args):
+def call_nbn_api(address, args):
+    address = address["address"]
+    address["lat"] = args["geometry"]["location"]["lat"],
+    address["lng"] = args["geometry"]["location"]["lng"],
+    url = "http://www2.nbnco.com.au/api/map/search.html"
+    headers = {
+        "referer": 'http://www.nbnco.com.au/connect-home-or-business/check-your-address.html'
+    }
+    return requests.get(url=url, params=address, headers=headers)
 
 
 def maps_to_telstra_address(maps_address):
