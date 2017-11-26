@@ -19,28 +19,42 @@
 # [7] = NCAS
 # [8] = NHAS
 # [9] = NSAS (Not needed???)
-import csv
 import json
+import csv
 
 
-def find(json_object):
-    global connectionType, containingRow, priceZone, portsAvailable
+class Connection(object):
+    def __init__(self):
+        self.connectionType = None
+        body_dict = {"priceZone": None, "portsAvailability": None}
+        self.body = body_dict
+
+    def setConnectionType(self, connectionType):
+        self.connectionType = connectionType
+
+    def setPriceZone(self, priceZone):
+        self.body["priceZone"] = priceZone
+
+    def setPortsAvailability(self, portsAvailability):
+        self.body["portsAvailability"] = portsAvailability
+
+def find(jsonObject, connectionObject):
+    global containingRow
 
     validation = 1
     count = 0
-    jsonText = str(json_object.text)
+    jsonText = str(jsonObject.text)
     jsonData = json.loads(jsonText)
 
     while validation:
-        if jsonData["accessQualificationList"][count]["qualificationResult"][
-            "value"] == "PASS":
+        if jsonData["accessQualificationList"][count]["qualificationResult"]["value"] == "PASS":
             validation = 0
         else:
             count = count + 1
 
-    connectionType = getType(jsonData, count)
+    connectionObject.connectionType = getType(jsonData, count)
 
-    if connectionType == "ADSL":
+    if connectionObject.connectionType == "ADSL2":
         exchangeCode = jsonData["siteDetails"]["exchangeCode"]
         portsCSV = csv.reader(open('ports.csv', "rb"), delimiter=",")
         for row in portsCSV:
@@ -49,17 +63,16 @@ def find(json_object):
                 containingRow = row
 
         if containingRow[4] != 0 or containingRow[5]:
-            portsAvailable = True
-            if portsAvailable:
-                priceZone = \
-                jsonData["accessQualificationList"][count]["priceZone"]["value"]
+            portsAvailability = True
+            connectionObject.setPortsAvailability(portsAvailability)
+            if portsAvailability:
+                priceZone = jsonData["accessQualificationList"][count]["priceZone"]["value"]
             else:
                 priceZone = "None"
-
+            connectionObject.setPriceZone(priceZone)
 
 def getType(jsonData, count):
-    valueToGet = jsonData["accessQualificationList"][count]["accessType"][
-        "value"]
+    valueToGet = jsonData["accessQualificationList"][count]["accessType"]["value"]
 
     if valueToGet == "NFAS":
         return "Fibre To The Premises"
@@ -93,14 +106,8 @@ def read_csv(csv_file):
 
 
 #########################
-class Connection(object):
-    def __init__(self):
-        self.connectionType = connectionType
-        body_dict = {"priceZone": priceZone}
-        self.body = body_dict
-
 
 def main(jsonObject):
-    find(jsonObject)
     connectionFinal = Connection()
+    find(jsonObject, connectionFinal)
     return json.dumps(connectionFinal.__dict__)
